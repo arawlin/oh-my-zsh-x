@@ -2,9 +2,9 @@
 #
 # oh-my-zsh-x updater
 #
-# Updates both layers in the right order:
-#   1. This repo (custom config)  - git pull
-#   2. Oh My Zsh (framework)      - upstream upgrade script
+# Updates both layers:
+#   1. Config layer (this repo)     - git pull
+#   2. Framework layer (Oh My Zsh)  - official tools/upgrade.sh
 #
 # Usage:
 #   sh update.sh
@@ -14,10 +14,12 @@ set -e
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 
-echo "==> Updating oh-my-zsh-x (custom config)..."
-git -C "$SCRIPT_DIR" pull --ff-only
+echo "==> Updating config layer (oh-my-zsh-x)..."
+if ! git -C "$SCRIPT_DIR" pull --ff-only; then
+  echo "! Config update skipped (no remote yet, or local changes conflict)."
+fi
 
-echo "==> Updating Oh My Zsh (framework)..."
+echo "==> Updating framework layer (Oh My Zsh)..."
 if [ -f "$ZSH/tools/upgrade.sh" ]; then
   zsh "$ZSH/tools/upgrade.sh"
 else

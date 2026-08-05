@@ -1,42 +1,33 @@
 #!/bin/sh
 #
-# oh-my-zsh-x installer
+# oh-my-zsh-x bootstrap installer
 #
-# Installs Oh My Zsh (upstream) and deploys this repo's customization:
-#   - custom/ directory (themes, plugins) as $ZSH_CUSTOM
-#   - zshrc.zsh-template as ~/.zshrc
-#   - creates ~/.zshrc_custom (custom profile hook)
-#   - optionally switches the default shell to zsh
+# Two ways to run:
+#   1. From a local clone:
+#        sh install.sh
+#   2. From remote (one-liner, clones this repo automatically):
+#        sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/install.sh)"
 #
-# Run from the repo root (or anywhere):
-#   sh install.sh
+# What it does:
+#   1. Bootstrap: locate this repo (clone it first when run from remote).
+#   2. Deploy the config layer: render zshrc.zsh-template as ~/.zshrc,
+#      point $ZSH_CUSTOM at this repo's custom/, create ~/.zshrc_custom.
+#   3. Install the framework by delegating to the official Oh My Zsh
+#      install script (--keep-zshrc so it never touches ~/.zshrc).
 #
 # Environment variables (all optional):
-#   ZSH       - Oh My Zsh install path          (default: $HOME/.oh-my-zsh)
-#   REPO      - GitHub repo to clone from       (default: ohmyzsh/ohmyzsh)
-#   REMOTE    - full git remote URL             (default: https://github.com/${REPO}.git)
-#   BRANCH    - branch to check out             (default: master)
-#   CHSH      - 'no' skips changing the shell   (default: yes)
-#   RUNZSH    - 'no' skips running zsh after    (default: yes)
-#   KEEP_ZSHRC - 'yes' keeps an existing .zshrc (default: no)
+#   OMZ_X_DIR      - this repo's location (default: $HOME/oh-my-zsh-x)
+#   OMZ_X_REMOTE   - git URL used to clone this repo (default: GitHub URL)
+#   ZSH            - Oh My Zsh install path (default: $HOME/.oh-my-zsh)
+#   KEEP_ZSHRC     - 'yes' keeps an existing .zshrc (default: no)
+#   OMZ_INSTALLER  - official installer (URL or local path; for testing)
 #
 # Options:
-#   --skip-chsh   same as CHSH=no
-#   --unattended  sets CHSH=no, RUNZSH=no, KEEP_ZSHRC=yes
-#   --keep-zshrc  same as KEEP_ZSHRC=yes
-#
-# Examples:
-#   sh install.sh                                  # interactive install
-#   sh install.sh --unattended                     # non-interactive install
-#   ZSH=/tmp/omztest/oh-my-zsh sh install.sh       # install to a custom path
+#   --skip-chsh    pass through: do not change the default shell
+#   --unattended   pass through: non-interactive install
+#   --keep-zshrc   keep an existing .zshrc (skip deploying the template)
 #
 set -e
-
-# --- Locate this repo -------------------------------------------------------
-
-# Resolve the directory of this script (repo root), following symlinks.
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
-ZSH_CUSTOM_DIR="$SCRIPT_DIR/custom"
 
 # --- Defaults ----------------------------------------------------------------
 
@@ -45,13 +36,14 @@ HOME="${HOME:-$(getent passwd "$USER" 2>/dev/null | cut -d: -f6)}"
 HOME="${HOME:-$(eval echo ~"$USER")}"
 
 ZSH="${ZSH:-$HOME/.oh-my-zsh}"
-REPO=${REPO:-ohmyzsh/ohmyzsh}
-REMOTE=${REMOTE:-https://github.com/${REPO}.git}
-BRANCH=${BRANCH:-master}
-
-CHSH=${CHSH:-yes}
-RUNZSH=${RUNZSH:-yes}
 KEEP_ZSHRC=${KEEP_ZSHRC:-no}
+
+# This repo's location and remote (used by the bootstrap step).
+OMZ_X_DIR="${OMZ_X_DIR:-$HOME/oh-my-zsh-x}"
+OMZ_X_REMOTE="${OMZ_X_REMOTE:-https://github.com/arawlin/oh-my-zsh-x.git}"
+
+# Official installer; override with a local path for testing/offline installs.
+OMZ_INSTALLER="${OMZ_INSTALLER:-https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh}"
 
 # --- Small helpers -----------------------------------------------------------
 
@@ -96,46 +88,32 @@ fmt_error() {
 
 # --- Steps -------------------------------------------------------------------
 
-setup_ohmyzsh() {
-  # Prevent the cloned repo from having insecure permissions, which
-  # otherwise breaks compinit ("command not found: compdef").
-  umask g-w,o-w
+bootstrap_repo() {
+  # If a sibling zshrc.zsh-template exists, we are running from a local clone.
+  if [ -f "$(dirname -- "$0")/zshrc.zsh-template" ]; then
+    SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+    return
+  fi
 
-  printf '%sCloning Oh My Zsh...%s\n' "$FMT_BLUE" "$FMT_RESET"
-
-  command_exists git || {
-    fmt_error "git is not installed"
-    exit 1
-  }
-
-  # Manual shallow clone; also works with git < 1.7.2.
-  git init --quiet "$ZSH" && cd "$ZSH" \
-  && git config core.eol lf \
-  && git config core.autocrlf false \
-  && git config fsck.zeroPaddedFilemode ignore \
-  && git config fetch.fsck.zeroPaddedFilemode ignore \
-  && git config receive.fsck.zeroPaddedFilemode ignore \
-  && git config oh-my-zsh.remote origin \
-  && git config oh-my-zsh.branch "$BRANCH" \
-  && git remote add origin "$REMOTE" \
-  && git fetch --depth=1 origin \
-  && git checkout -b "$BRANCH" "origin/$BRANCH" || {
-    [ ! -d "$ZSH" ] || {
-      cd -
-      rm -rf "$ZSH" 2>/dev/null
+  # Otherwise (curl | sh) clone this repo first.
+  if [ ! -d "$OMZ_X_DIR" ]; then
+    printf '%sCloning oh-my-zsh-x...%s\n' "$FMT_BLUE" "$FMT_RESET"
+    command_exists git || {
+      echo "Error: git is required to bootstrap." >&2
+      exit 1
     }
-    fmt_error "git clone of oh-my-zsh repo failed"
-    exit 1
-  }
-  cd -
-  echo
+    git clone --quiet "$OMZ_X_REMOTE" "$OMZ_X_DIR" || {
+      echo "Error: failed to clone $OMZ_X_REMOTE" >&2
+      exit 1
+    }
+  fi
+  SCRIPT_DIR="$OMZ_X_DIR"
 }
 
-setup_zshrc() {
-  # Keep the most recent old .zshrc at .zshrc.pre-oh-my-zsh so uninstall.sh
-  # can restore it; older backups get a datestamp suffix.
-  # Note: plain variables (no `local`) to stay POSIX-sh compatible.
+deploy_zshrc() {
   zdot="${ZDOTDIR:-$HOME}"
+  # Ensure the target dotfiles dir exists (e.g. when ZDOTDIR is set).
+  mkdir -p "$zdot"
   old_zshrc="$zdot/.zshrc.pre-oh-my-zsh"
 
   printf '%sLooking for an existing zsh config...%s\n' "$FMT_BLUE" "$FMT_RESET"
@@ -166,7 +144,7 @@ setup_zshrc() {
 
   # Rewrite paths as portable literals ($HOME/...) before writing.
   omz=$(path_to_home "$ZSH")
-  omz_x_custom=$(path_to_home "$ZSH_CUSTOM_DIR")
+  omz_x_custom=$(path_to_home "$SCRIPT_DIR/custom")
 
   sed "s|__OMZ_X_CUSTOM__|$(sed_escape "$omz_x_custom")|" \
     "$SCRIPT_DIR/zshrc.zsh-template" \
@@ -180,91 +158,15 @@ setup_zshrc() {
   echo
 }
 
-setup_shell() {
-  # Skip if disabled, stdin is closed, or the shell is already zsh.
-  if [ "$CHSH" = no ]; then
-    return
-  fi
-  if [ "$(basename -- "$SHELL")" = "zsh" ]; then
-    return
-  fi
-  if ! command_exists chsh; then
-    printf 'I cannot change your shell automatically (no chsh).\n'
-    printf '%sPlease manually change your default shell to zsh%s\n' "$FMT_BLUE" "$FMT_RESET"
-    return
-  fi
-
-  printf '%sTime to change your default shell to zsh:%s\n' "$FMT_BLUE" "$FMT_RESET"
-  printf 'Do you want to change your default shell to zsh? [Y/n] '
-  read -r opt
-  case $opt in
-    [Yy]*|"") ;;
-    [Nn]*) echo "Shell change skipped."; return ;;
-    *) echo "Invalid choice. Shell change skipped."; return ;;
-  esac
-
-  # Find a zsh binary that is registered in /etc/shells.
-  shells_file=""
-  if [ -f /etc/shells ]; then
-    shells_file=/etc/shells
-  elif [ -f /usr/share/defaults/etc/shells ]; then
-    shells_file=/usr/share/defaults/etc/shells
-  else
-    fmt_error "could not find /etc/shells. Change your default shell manually."
-    return
-  fi
-  zsh_bin=""
-  if ! zsh_bin=$(command -v zsh) || ! grep -qx "$zsh_bin" "$shells_file"; then
-    if ! zsh_bin=$(grep '^/.*/zsh$' "$shells_file" | tail -n 1) || [ ! -f "$zsh_bin" ]; then
-      fmt_error "no zsh binary found or not present in '$shells_file'"
-      fmt_error "change your default shell manually."
-      return
-    fi
-  fi
-
-  # Back up the current shell so uninstall.sh can restore it.
-  if [ -n "$SHELL" ]; then
-    echo "$SHELL" > "${ZDOTDIR:-$HOME}/.shell.pre-oh-my-zsh"
-  else
-    grep "^$USER:" /etc/passwd | awk -F: '{print $7}' > "${ZDOTDIR:-$HOME}/.shell.pre-oh-my-zsh"
-  fi
-
-  echo "Changing your shell to $zsh_bin..."
-  if chsh -s "$zsh_bin" "$USER"; then
-    export SHELL="$zsh_bin"
-    printf '%sShell successfully changed to '%s'.%s\n' "$FMT_GREEN" "$zsh_bin" "$FMT_RESET"
-  else
-    fmt_error "chsh command unsuccessful. Change your default shell manually."
-  fi
-  echo
-}
-
-print_success() {
-  printf '%s%s%s\n' "$FMT_GREEN" "oh-my-zsh-x is now installed!" "$FMT_RESET"
-  printf '\n'
-  printf '  - Oh My Zsh (framework):  %s\n' "$ZSH"
-  printf '  - Custom config (repo):    %s\n' "$SCRIPT_DIR"
-  printf '  - Custom directory:        %s\n' "$ZSH_CUSTOM_DIR"
-  printf '  - Zsh config:              %s/.zshrc\n' "${ZDOTDIR:-$HOME}"
-  printf '\n'
-  printf 'Edit %s/custom and %s to tune your setup.\n' "$SCRIPT_DIR" "$SCRIPT_DIR/zshrc.zsh-template"
-  printf 'Follow us on X: https://x.com/ohmyzsh\n'
-}
 
 # --- Entry point --------------------------------------------------------------
 
 main() {
-  # Run unattended when stdin is not a tty (e.g. curl | sh).
-  if [ ! -t 0 ]; then
-    RUNZSH=no
-    CHSH=no
-  fi
-
-  # Parse arguments.
+  # Options for the official installer (passed through).
+  official_args=""
   while [ $# -gt 0 ]; do
     case $1 in
-      --unattended) RUNZSH=no; CHSH=no; KEEP_ZSHRC=yes ;;
-      --skip-chsh) CHSH=no ;;
+      --skip-chsh|--unattended) official_args="$official_args $1" ;;
       --keep-zshrc) KEEP_ZSHRC=yes ;;
       *) echo "Unknown option: $1"; exit 1 ;;
     esac
@@ -272,31 +174,23 @@ main() {
   done
 
   setup_color
+  bootstrap_repo
 
-  command_exists zsh || {
-    printf '%sZsh is not installed.%s Please install zsh first.\n' "$FMT_YELLOW" "$FMT_RESET"
-    exit 1
-  }
+  # Deploy the config layer BEFORE running the official installer:
+  # the official script ends with `exec zsh -l`, which replaces this
+  # process, so nothing after that call would run.
+  deploy_zshrc
 
-  if [ -d "$ZSH" ]; then
-    printf '%sThe $ZSH folder already exists (%s).%s\n' "$FMT_YELLOW" "$ZSH" "$FMT_RESET"
-    echo "You'll need to remove it if you want to reinstall, e.g.:"
-    echo "  rm -rf $ZSH"
-    exit 1
-  fi
-
-  setup_ohmyzsh
-  setup_zshrc
-  setup_shell
-
-  print_success
-
-  if [ "$RUNZSH" = no ]; then
-    printf '%sRun zsh to try it out.%s\n' "$FMT_YELLOW" "$FMT_RESET"
-    exit
-  fi
-
-  exec zsh -l
+  # Install the framework via the official script. --keep-zshrc makes
+  # sure it never overwrites the .zshrc we just deployed.
+  printf '%sInstalling Oh My Zsh (upstream)...%s\n' "$FMT_BLUE" "$FMT_RESET"
+  export ZSH
+  case "$OMZ_INSTALLER" in
+    http://*|https://*)
+      sh -c "$(curl -fsSL "$OMZ_INSTALLER")" "" $official_args --keep-zshrc ;;
+    *)
+      sh "$OMZ_INSTALLER" $official_args --keep-zshrc ;;
+  esac
 }
 
 main "$@"

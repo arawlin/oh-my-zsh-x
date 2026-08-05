@@ -20,21 +20,27 @@ oh-my-zsh-x/
 
 ## 一键安装
 
-在**新机器**上，克隆本仓库并运行安装脚本：
+### 方式一：本地克隆
 
 ```sh
-git clone <repo-url> ~/work/me/oh-my-zsh-x
-cd ~/work/me/oh-my-zsh-x
+git clone https://github.com/arawlin/oh-my-zsh-x.git ~/oh-my-zsh-x
+cd ~/oh-my-zsh-x
 sh install.sh
+```
+
+### 方式二：远程一键（推荐）
+
+无需手动克隆，脚本会先把自己克隆到 `~/oh-my-zsh-x`（可用 `OMZ_X_DIR` 覆盖），再继续安装：
+
+```sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/install.sh)"
 ```
 
 安装脚本会完成：
 
-1. 浅克隆（shallow clone）官方 Oh My Zsh 到 `~/.oh-my-zsh`
-2. 把 `zshrc.zsh-template` 部署为 `~/.zshrc`（自动替换 `ZSH` 与 `ZSH_CUSTOM` 路径）
-3. 将本仓库的 `custom/` 目录作为 `$ZSH_CUSTOM`
-4. 创建 `~/.zshrc_custom`（自定义 profile 挂载点）
-5. 交互式询问是否将默认 shell 切换为 zsh
+1. **引导**：定位本仓库（远程运行时先自动克隆）
+2. **部署配置层**：把 `zshrc.zsh-template` 渲染为 `~/.zshrc`（自动替换 `ZSH` 与 `ZSH_CUSTOM` 路径）、将 `custom/` 作为 `$ZSH_CUSTOM`、创建 `~/.zshrc_custom`
+3. **安装框架层**：委托官方 Oh My Zsh 安装脚本（`--keep-zshrc`，不会覆盖我们部署的 `.zshrc`），并交互询问是否切换默认 shell
 
 ### 无人值守安装
 
@@ -42,27 +48,19 @@ sh install.sh
 sh install.sh --unattended
 ```
 
-等价于 `CHSH=no RUNZSH=no KEEP_ZSHRC=yes`，适用于自动化部署。
-
-### 安装到自定义路径
-
-```sh
-ZSH=/opt/oh-my-zsh sh install.sh
-```
+参数透传给官方脚本：不切换 shell、不启动 zsh，适用于自动化部署。
 
 ### 可配置项
 
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
+| `OMZ_X_DIR` | `$HOME/oh-my-zsh-x` | 本仓库位置（远程一键安装时的克隆目标） |
+| `OMZ_X_REMOTE` | `https://github.com/arawlin/oh-my-zsh-x.git` | 引导克隆地址 |
 | `ZSH` | `$HOME/.oh-my-zsh` | Oh My Zsh 安装路径 |
-| `REPO` | `ohmyzsh/ohmyzsh` | 克隆来源仓库 |
-| `REMOTE` | `https://github.com/${REPO}.git` | 完整 git 地址 |
-| `BRANCH` | `master` | 检出分支 |
-| `CHSH` | `yes` | 是否切换默认 shell |
-| `RUNZSH` | `yes` | 安装后是否启动 zsh |
 | `KEEP_ZSHRC` | `no` | 是否保留已有 `.zshrc` |
+| `OMZ_INSTALLER` | 官方 install.sh URL | 官方安装脚本（本地测试可传文件路径） |
 
-命令行参数：`--skip-chsh`、`--keep-zshrc`、`--unattended`。
+命令行参数：`--skip-chsh`、`--keep-zshrc`、`--unattended`（后两者透传官方）。
 
 ## 更新
 
@@ -72,8 +70,10 @@ sh update.sh
 
 分两层更新，互不干扰：
 
-1. **配置层**：`git pull` 拉取本仓库最新自定义内容
+1. **配置层**：`git pull` 拉取本仓库最新自定义内容（未配置远端或本地有冲突时跳过，不中断）
 2. **框架层**：调用官方 `tools/upgrade.sh` 更新 Oh My Zsh
+
+> 注意：`update.sh` 只更新**仓库内**的模板、主题与脚本，**不会**改动已部署的 `~/.zshrc`（它是安装时的渲染产物）。若模板有更新需要同步到本机，可删除 `~/.zshrc` 后重新运行 `sh install.sh`（旧文件会备份为 `.zshrc.pre-oh-my-zsh`）。
 
 ## 自定义说明
 
