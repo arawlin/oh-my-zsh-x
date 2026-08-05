@@ -10,10 +10,12 @@
 ```text
 oh-my-zsh-x/
 ├── README.md
-├── install.sh                 # 一键安装脚本
-├── upgrade.sh                 # 更新脚本（配置 + 框架）
-├── zshrc.zsh-template         # .zshrc 配置模板
-└── custom/                    # = $ZSH_CUSTOM，自定义目录
+├── templates/                     # 配置模板
+│   └── zshrc.zsh-template         # .zshrc 配置模板
+├── tools/                         # 脚本（与原版目录结构一致）
+│   ├── install.sh                 # 一键安装脚本
+│   └── upgrade.sh                 # 更新脚本（配置 + 框架）
+└── custom/                        # = $ZSH_CUSTOM，自定义目录
 ```
 
 ## 一键安装
@@ -23,7 +25,7 @@ oh-my-zsh-x/
 ```sh
 git clone https://github.com/arawlin/oh-my-zsh-x.git ~/.oh-my-zsh-x
 cd ~/.oh-my-zsh-x
-sh install.sh
+sh tools/install.sh
 ```
 
 ### 方式二：远程一键（推荐）
@@ -31,13 +33,13 @@ sh install.sh
 无需手动克隆，脚本会先把自己克隆到 `~/.oh-my-zsh-x`（可用 `OMZ_X_DIR` 覆盖），再继续安装：
 
 ```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/tools/install.sh)"
 ```
 
 安装脚本会完成：
 
 1. **引导**：定位本仓库（远程运行时先自动克隆）
-2. **部署配置层**：把 `zshrc.zsh-template` 渲染为 `~/.zshrc`（自动替换 `ZSH` 与 `ZSH_CUSTOM` 路径）、将 `custom/` 作为 `$ZSH_CUSTOM`、创建 `~/.zshrc_custom`
+2. **部署配置层**：把 `templates/zshrc.zsh-template` 渲染为 `~/.zshrc`（自动替换 `ZSH` 与 `ZSH_CUSTOM` 路径）、将 `custom/` 作为 `$ZSH_CUSTOM`、创建 `~/.zshrc_custom`
 3. **安装框架层**：委托官方 Oh My Zsh 安装脚本（`--keep-zshrc`，不会覆盖我们部署的 `.zshrc`），并交互询问是否切换默认 shell
 
 ### 无人值守安装
@@ -63,7 +65,7 @@ sh install.sh --unattended
 ## 更新
 
 ```sh
-sh upgrade.sh
+sh tools/upgrade.sh
 ```
 
 分两层更新，互不干扰：

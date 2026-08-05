@@ -11,11 +11,13 @@
 #
 set -e
 
+# This script lives in tools/; the repo root is one level up.
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+REPO_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd -P)
 ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 
 echo "==> Updating config layer (oh-my-zsh-x)..."
-if ! git -C "$SCRIPT_DIR" pull --ff-only; then
+if ! git -C "$REPO_DIR" pull --ff-only; then
   echo "! Config update skipped (no remote yet, or local changes conflict)."
 fi
 

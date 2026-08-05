@@ -10,8 +10,9 @@
 #
 # What it does:
 #   1. Bootstrap: locate this repo (clone it first when run from remote).
-#   2. Deploy the config layer: render zshrc.zsh-template as ~/.zshrc,
-#      point $ZSH_CUSTOM at this repo's custom/, create ~/.zshrc_custom.
+#   2. Deploy the config layer: render templates/zshrc.zsh-template as
+#      ~/.zshrc, point $ZSH_CUSTOM at this repo's custom/, create
+#      ~/.zshrc_custom.
 #   3. Install the framework by delegating to the official Oh My Zsh
 #      install script (--keep-zshrc so it never touches ~/.zshrc).
 #
@@ -44,6 +45,9 @@ OMZ_X_REMOTE="${OMZ_X_REMOTE:-https://github.com/arawlin/oh-my-zsh-x.git}"
 
 # Official installer; override with a local path for testing/offline installs.
 OMZ_INSTALLER="${OMZ_INSTALLER:-https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh}"
+
+# This script lives in tools/; the repo root is one level up.
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 
 # --- Small helpers -----------------------------------------------------------
 
@@ -89,9 +93,9 @@ fmt_error() {
 # --- Steps -------------------------------------------------------------------
 
 bootstrap_repo() {
-  # If a sibling zshrc.zsh-template exists, we are running from a local clone.
-  if [ -f "$(dirname -- "$0")/zshrc.zsh-template" ]; then
-    SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+  # Running from a local clone when tools/../custom and the template exist.
+  if [ -d "$SCRIPT_DIR/../custom" ] && [ -f "$SCRIPT_DIR/../templates/zshrc.zsh-template" ]; then
+    REPO_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd -P)
     return
   fi
 
@@ -107,7 +111,7 @@ bootstrap_repo() {
       exit 1
     }
   fi
-  SCRIPT_DIR="$OMZ_X_DIR"
+  REPO_DIR="$OMZ_X_DIR"
 }
 
 deploy_zshrc() {
@@ -144,10 +148,10 @@ deploy_zshrc() {
 
   # Rewrite paths as portable literals ($HOME/...) before writing.
   omz=$(path_to_home "$ZSH")
-  omz_x_custom=$(path_to_home "$SCRIPT_DIR/custom")
+  omz_x_custom=$(path_to_home "$REPO_DIR/custom")
 
   sed "s|__OMZ_X_CUSTOM__|$(sed_escape "$omz_x_custom")|" \
-    "$SCRIPT_DIR/zshrc.zsh-template" \
+    "$REPO_DIR/templates/zshrc.zsh-template" \
     | sed "s|^export ZSH=.*$|export ZSH=\"$(sed_escape "$omz")\"|" \
     > "$zdot/.zshrc-omztemp"
   mv -f "$zdot/.zshrc-omztemp" "$zdot/.zshrc"
