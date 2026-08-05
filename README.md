@@ -11,7 +11,7 @@
 oh-my-zsh-x/
 ├── README.md
 ├── install.sh                 # 一键安装脚本
-├── update.sh                  # 更新脚本（配置 + 框架）
+├── upgrade.sh                 # 更新脚本（配置 + 框架）
 ├── zshrc.zsh-template         # .zshrc 配置模板
 └── custom/                    # = $ZSH_CUSTOM，自定义目录
     └── themes/
@@ -65,7 +65,7 @@ sh install.sh --unattended
 ## 更新
 
 ```sh
-sh update.sh
+sh upgrade.sh
 ```
 
 分两层更新，互不干扰：
@@ -73,7 +73,7 @@ sh update.sh
 1. **配置层**：`git pull` 拉取本仓库最新自定义内容（未配置远端或本地有冲突时跳过，不中断）
 2. **框架层**：调用官方 `tools/upgrade.sh` 更新 Oh My Zsh
 
-> 注意：`update.sh` 只更新**仓库内**的模板、主题与脚本，**不会**改动已部署的 `~/.zshrc`（它是安装时的渲染产物）。若模板有更新需要同步到本机，可删除 `~/.zshrc` 后重新运行 `sh install.sh`（旧文件会备份为 `.zshrc.pre-oh-my-zsh`）。
+> 注意：`upgrade.sh` 只更新**仓库内**的模板、主题与脚本，**不会**改动已部署的 `~/.zshrc`（它是安装时的渲染产物）。若模板有更新需要同步到本机，可删除 `~/.zshrc` 后重新运行 `sh install.sh`（旧文件会备份为 `.zshrc.pre-oh-my-zsh`）。
 
 ## 自定义说明
 

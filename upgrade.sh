@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# oh-my-zsh-x updater
+# oh-my-zsh-x upgrade script
 #
 # Updates both layers:
 #   1. Config layer (this repo)     - git pull
 #   2. Framework layer (Oh My Zsh)  - official tools/upgrade.sh
 #
 # Usage:
-#   sh update.sh
+#   sh upgrade.sh
 #
 set -e
 
