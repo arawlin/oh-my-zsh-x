@@ -14,8 +14,6 @@ oh-my-zsh-x/
 ├── upgrade.sh                 # 更新脚本（配置 + 框架）
 ├── zshrc.zsh-template         # .zshrc 配置模板
 └── custom/                    # = $ZSH_CUSTOM，自定义目录
-    └── themes/
-        └── astro.zsh-theme    # 自定义 prompt 主题
 ```
 
 ## 一键安装
