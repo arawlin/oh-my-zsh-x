@@ -16,7 +16,7 @@
 #      install script (--keep-zshrc so it never touches ~/.zshrc).
 #
 # Environment variables (all optional):
-#   OMZ_X_DIR      - this repo's location (default: $HOME/oh-my-zsh-x)
+#   OMZ_X_DIR      - this repo's location (default: $HOME/.oh-my-zsh-x)
 #   OMZ_X_REMOTE   - git URL used to clone this repo (default: GitHub URL)
 #   ZSH            - Oh My Zsh install path (default: $HOME/.oh-my-zsh)
 #   KEEP_ZSHRC     - 'yes' keeps an existing .zshrc (default: no)
@@ -39,7 +39,7 @@ ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 KEEP_ZSHRC=${KEEP_ZSHRC:-no}
 
 # This repo's location and remote (used by the bootstrap step).
-OMZ_X_DIR="${OMZ_X_DIR:-$HOME/oh-my-zsh-x}"
+OMZ_X_DIR="${OMZ_X_DIR:-$HOME/.oh-my-zsh-x}"
 OMZ_X_REMOTE="${OMZ_X_REMOTE:-https://github.com/arawlin/oh-my-zsh-x.git}"
 
 # Official installer; override with a local path for testing/offline installs.

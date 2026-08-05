@@ -21,14 +21,14 @@ oh-my-zsh-x/
 ### 方式一：本地克隆
 
 ```sh
-git clone https://github.com/arawlin/oh-my-zsh-x.git ~/oh-my-zsh-x
-cd ~/oh-my-zsh-x
+git clone https://github.com/arawlin/oh-my-zsh-x.git ~/.oh-my-zsh-x
+cd ~/.oh-my-zsh-x
 sh install.sh
 ```
 
 ### 方式二：远程一键（推荐）
 
-无需手动克隆，脚本会先把自己克隆到 `~/oh-my-zsh-x`（可用 `OMZ_X_DIR` 覆盖），再继续安装：
+无需手动克隆，脚本会先把自己克隆到 `~/.oh-my-zsh-x`（可用 `OMZ_X_DIR` 覆盖），再继续安装：
 
 ```sh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/install.sh)"
@@ -52,7 +52,7 @@ sh install.sh --unattended
 
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `OMZ_X_DIR` | `$HOME/oh-my-zsh-x` | 本仓库位置（远程一键安装时的克隆目标） |
+| `OMZ_X_DIR` | `$HOME/.oh-my-zsh-x` | 本仓库位置（远程一键安装时的克隆目标） |
 | `OMZ_X_REMOTE` | `https://github.com/arawlin/oh-my-zsh-x.git` | 引导克隆地址 |
 | `ZSH` | `$HOME/.oh-my-zsh` | Oh My Zsh 安装路径 |
 | `KEEP_ZSHRC` | `no` | 是否保留已有 `.zshrc` |
