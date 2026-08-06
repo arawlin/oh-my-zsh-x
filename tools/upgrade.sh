@@ -21,6 +21,13 @@ if ! git -C "$REPO_DIR" pull --ff-only; then
   echo "! Config update skipped (no remote yet, or local changes conflict)."
 fi
 
+echo "==> Updating custom plugins..."
+if [ -f "$REPO_DIR/tools/install-plugins.sh" ]; then
+  sh "$REPO_DIR/tools/install-plugins.sh"
+else
+  echo "! tools/install-plugins.sh not found, skipping"
+fi
+
 echo "==> Updating framework layer (Oh My Zsh)..."
 if [ -f "$ZSH/tools/upgrade.sh" ]; then
   zsh "$ZSH/tools/upgrade.sh"

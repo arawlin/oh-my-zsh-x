@@ -1,0 +1,4 @@
+# Community plugins cloned by tools/install-plugins.sh are local machine
+# state. Keeping them out of git means `git pull` on this repo can never
+# conflict with plugin upstream changes.
+custom/plugins/

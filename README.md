@@ -14,7 +14,8 @@ oh-my-zsh-x/
 │   └── zshrc.zsh-template         # .zshrc 配置模板
 ├── tools/                         # 脚本（与原版目录结构一致）
 │   ├── install.sh                 # 一键安装脚本
-│   └── upgrade.sh                 # 更新脚本（配置 + 框架）
+│   ├── install-plugins.sh         # 社区插件安装/更新脚本
+│   └── upgrade.sh                 # 更新脚本（配置 + 插件 + 框架）
 └── custom/                        # = $ZSH_CUSTOM，自定义目录
 ```
 
@@ -40,7 +41,8 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/arawlin/oh-my-zsh-x/main/t
 
 1. **引导**：定位本仓库（远程运行时先自动克隆）
 2. **部署配置层**：把 `templates/zshrc.zsh-template` 渲染为 `~/.zshrc`（自动替换 `ZSH` 与 `ZSH_CUSTOM` 路径）、将 `custom/` 作为 `$ZSH_CUSTOM`、创建 `~/.zshrc_custom`
-3. **安装框架层**：委托官方 Oh My Zsh 安装脚本（`--keep-zshrc`，不会覆盖我们部署的 `.zshrc`），并交互询问是否切换默认 shell
+3. **安装社区插件**：调用 `tools/install-plugins.sh`，把第三方插件克隆到 `$ZSH_CUSTOM/plugins/`（默认启用列表见「插件管理」）
+4. **安装框架层**：委托官方 Oh My Zsh 安装脚本（`--keep-zshrc`，不会覆盖我们部署的 `.zshrc`），并交互询问是否切换默认 shell
 
 ### 无人值守安装
 
@@ -58,6 +60,7 @@ sh install.sh --unattended
 | `OMZ_X_REMOTE` | `https://github.com/arawlin/oh-my-zsh-x.git` | 引导克隆地址 |
 | `ZSH` | `$HOME/.oh-my-zsh` | Oh My Zsh 安装路径 |
 | `KEEP_ZSHRC` | `no` | 是否保留已有 `.zshrc` |
+| `SKIP_PLUGINS` | `no` | 设为 `yes` 跳过社区插件安装 |
 | `OMZ_INSTALLER` | 官方 install.sh URL | 官方安装脚本（本地测试可传文件路径） |
 
 命令行参数：`--skip-chsh`、`--keep-zshrc`、`--unattended`（后两者透传官方）。
@@ -68,10 +71,11 @@ sh install.sh --unattended
 sh tools/upgrade.sh
 ```
 
-分两层更新，互不干扰：
+分三层更新，互不干扰：
 
 1. **配置层**：`git pull` 拉取本仓库最新自定义内容（未配置远端或本地有冲突时跳过，不中断）
-2. **框架层**：调用官方 `tools/upgrade.sh` 更新 Oh My Zsh
+2. **插件层**：调用 `tools/install-plugins.sh` 增量更新 `custom/plugins/` 下的社区插件（只快进更新，失败不中断）
+3. **框架层**：调用官方 `tools/upgrade.sh` 更新 Oh My Zsh
 
 > 注意：`upgrade.sh` 只更新**仓库内**的模板、主题与脚本，**不会**改动已部署的 `~/.zshrc`（它是安装时的渲染产物）。若模板有更新需要同步到本机，可删除 `~/.zshrc` 后重新运行 `sh install.sh`（旧文件会备份为 `.zshrc.pre-oh-my-zsh`）。
 
@@ -98,6 +102,28 @@ omz reload
 ### 个人配置
 
 `.zshrc` 模板末尾会 `source ~/.zshrc_custom`，不随本仓库版本管理、不想进 git 的个人配置（如本机专属别名）可放入该文件。
+
+## 插件管理
+
+默认启用的插件（定义在 `templates/zshrc.zsh-template` 的 `plugins=()`）：
+
+- **内置插件**（零安装）：`git`、`history`、`colored-man-pages`、`z`、`extract`、`copybuffer`、`common-aliases`、`web-search`、`jsontools`、`fzf`、`vi-mode`、`history-substring-search`
+- **社区插件**（安装时自动克隆）：`zsh-autosuggestions`、`zsh-completions`、`zsh-syntax-highlighting`
+- **可选**：`sudo`、`colorize`（前者与 `vi-mode` 的 Esc 键冲突，后者依赖 `pygmentize`/`chroma`，故默认注释，取消注释即可启用）
+
+社区插件统一克隆到 `custom/plugins/`（已在 `.gitignore` 中忽略，属本机状态、不进入版本库），由 `tools/install-plugins.sh` 管理：
+
+- 安装时自动克隆缺失插件，`upgrade.sh` 时自动快进更新已有插件（幂等，可反复执行）
+- 每个插件保留自己的上游 remote，独立更新，互不影响
+- **新增社区插件**：编辑 `tools/install-plugins.sh` 的 `PLUGIN_SPECS`，加一行 `名称 仓库地址` 即可
+- 因为插件目录不入库，`git pull` 本仓库永远不会因插件更新而产生冲突；框架层（`~/.oh-my-zsh`）由官方 `omz update` 维护，同样从不改动
+
+依赖提示：
+
+- `fzf` 插件需要系统安装 `fzf`（`brew install fzf` 或 `sudo apt install fzf`），`install-plugins.sh` 会检测并提示
+- `colorize` 插件需要 `pygmentize`（`pip install pygments`）或 `chroma`
+
+> 提示：`custom/plugins/` 已在 `.gitignore` 中忽略。若需将手写自定义插件纳入版本库，可用 `git add -f custom/plugins/<name>` 强制添加。
 
 ## 卸载
 

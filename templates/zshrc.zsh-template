@@ -71,13 +71,33 @@ export ZSH_CUSTOM="__OMZ_X_CUSTOM__"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
+#
+# The zsh-* plugins below are community plugins auto-installed by
+# tools/install-plugins.sh into $ZSH_CUSTOM/plugins/ during install.
+# zsh-syntax-highlighting must stay LAST in this list.
 plugins=(
+    # Core built-ins
     git
-    vi-mode
     history
-    history-substring-search
     colored-man-pages
     z
+    extract
+    copybuffer
+    common-aliases
+    web-search
+    jsontools
+    # sudo       # double-Esc prefixes sudo; conflicts with vi-mode's Esc
+    # colorize   # needs pygmentize or chroma installed
+
+    # Efficiency
+    # fzf                    # needs the fzf binary: brew install fzf
+    vi-mode
+    history-substring-search
+
+    # Community (auto-installed by tools/install-plugins.sh)
+    zsh-autosuggestions
+    zsh-completions
+    zsh-syntax-highlighting # must stay LAST
 )
 
 # terminal color capability override

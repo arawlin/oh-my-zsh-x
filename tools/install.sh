@@ -13,7 +13,9 @@
 #   2. Deploy the config layer: render templates/zshrc.zsh-template as
 #      ~/.zshrc, point $ZSH_CUSTOM at this repo's custom/, create
 #      ~/.zshrc_custom.
-#   3. Install the framework by delegating to the official Oh My Zsh
+#   3. Install community plugins into $ZSH_CUSTOM/plugins via
+#      tools/install-plugins.sh (idempotent clone/update).
+#   4. Install the framework by delegating to the official Oh My Zsh
 #      install script (--keep-zshrc so it never touches ~/.zshrc).
 #
 # Environment variables (all optional):
@@ -184,6 +186,11 @@ main() {
   # the official script ends with `exec zsh -l`, which replaces this
   # process, so nothing after that call would run.
   deploy_zshrc
+
+  # Install community plugins into $ZSH_CUSTOM/plugins (idempotent).
+  if [ -f "$REPO_DIR/tools/install-plugins.sh" ]; then
+    sh "$REPO_DIR/tools/install-plugins.sh"
+  fi
 
   # Install the framework via the official script. --keep-zshrc makes
   # sure it never overwrites the .zshrc we just deployed.
