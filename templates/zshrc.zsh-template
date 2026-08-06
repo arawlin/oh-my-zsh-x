@@ -60,7 +60,7 @@ ZSH_THEME="astro"
 # "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
 # or set a custom format using the strftime function format specifications,
 # see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
+HIST_STAMPS="yyyy-mm-dd"
 
 # Custom folder: this repo's `custom/` directory acts as $ZSH_CUSTOM.
 # install.sh replaces __OMZ_X_CUSTOM__ with the real path on deployment.
