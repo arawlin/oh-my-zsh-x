@@ -75,21 +75,6 @@ sync_plugin() {
   fi
 }
 
-# Warn (never fail) when a plugin needs a system binary we do not install.
-check_system_deps() {
-  if ! command_exists fzf; then
-    printf '%s! fzf not found: the "fzf" plugin needs it. Install with:%s\n' \
-      "$FMT_YELLOW" "$FMT_RESET"
-    printf '    brew install fzf       (macOS)\n'
-    printf '    sudo apt install fzf   (Debian/Ubuntu)\n'
-  fi
-  if ! command_exists pygmentize && ! command_exists chroma; then
-    printf '%s! pygmentize/chroma not found: the "colorize" plugin needs one.%s\n' \
-      "$FMT_YELLOW" "$FMT_RESET"
-    printf '    pip install pygments   (provides pygmentize)\n'
-  fi
-}
-
 main() {
   if [ "$SKIP_PLUGINS" = yes ]; then
     echo "! Plugin management skipped (SKIP_PLUGINS=yes)"
@@ -107,7 +92,6 @@ main() {
     [ -z "$name" ] && continue
     sync_plugin "$name" "$url"
   done
-  check_system_deps
 }
 
 main "$@"
