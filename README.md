@@ -120,8 +120,10 @@ omz reload
 
 依赖提示：
 
-- `fzf` 插件需要系统安装 `fzf`（`brew install fzf` 或 `sudo apt install fzf`），`install-plugins.sh` 会检测并提示
+- `fzf` 插件需要系统安装 `fzf`（`brew install fzf` 或 `sudo apt install fzf`）
 - `colorize` 插件需要 `pygmentize`（`pip install pygments`）或 `chroma`
+
+> **已知冲突**：`common-aliases` 插件的全局别名 `P`（`2>&1| pygmentize -l pytb`）会与 Oh My Zsh 的 `omz_urlencode()` 冲突。zsh 在**函数定义时**展开函数体内的别名，因此 `source ~/.zshrc` 会在 `P` 别名已存在的情况下重定义 `omz_urlencode`，把 `pygmentize` 固化进函数体，导致每次渲染 prompt（`omz_termsupport_cwd` 会调用 `omz_urlencode`）报 `command not found: pygmentize`。本仓库通过 `custom/omz-fixes.zsh`（在插件加载后自动执行）移除 `P` 别名解决（引号不可省略，且 zsh 的 `unalias` 无 `-g` 选项）。如需使用 `P` 别名（Python 回溯高亮），请安装 `pygments` 并删除 `custom/omz-fixes.zsh` 中的 `unalias` 行。
 
 > 提示：`custom/plugins/` 已在 `.gitignore` 中忽略。若需将手写自定义插件纳入版本库，可用 `git add -f custom/plugins/<name>` 强制添加。
 
